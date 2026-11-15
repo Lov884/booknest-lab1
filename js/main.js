@@ -1,5 +1,16 @@
 const bookList = document.getElementById("book-list");
 
+/* Open Library cover by ISBN, keyed by book id in data.js */
+const isbns = {
+  1: "9780156012195", 2: "9780451524935", 3: "9780141439518",
+  4: "9780547928227", 5: "9780143058144", 6: "9780553380163",
+  7: "9780061120084", 8: "9780743273565", 9: "9780060850524",
+  10: "9780590353427", 11: "9780316769488", 12: "9780141441146",
+  13: "9780062316110", 14: "9780441172719", 15: "9780062315007",
+  16: "9780062693662", 17: "9780141180144", 18: "9781400079988",
+  19: "9781451673319", 20: "9780345539434"
+};
+
 const genreColors = {
   "Fantasy": "#7048e8",
   "Dystopia": "#c92a2a",
@@ -15,46 +26,96 @@ function getColor(genre) {
   return genreColors[genre] || "#495057";
 }
 
+function addText(parent, tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  el.textContent = text;
+  parent.appendChild(el);
+  return el;
+}
+
 function renderBooks(list) {
   bookList.innerHTML = "";
 
   if (list.length === 0) {
-    bookList.innerHTML = '<p class="empty">No books found.</p>';
+    addText(bookList, "p", "empty", "No books found.");
     return;
   }
 
   list.forEach(function (book) {
     const card = document.createElement("article");
     card.className = "book-card";
-    card.innerHTML =
-      '<div class="cover" style="background-color:' + getColor(book.genre) + '">' +
-        '<span class="cover-title">' + book.title + "</span>" +
-        '<span class="cover-author">' + book.author + "</span>" +
-      "</div>" +
-      "<h3>" + book.title + "</h3>" +
-      "<p>" + book.author + " (" + book.year + ")</p>" +
-      "<p>Genre: " + book.genre + "</p>" +
-      '<p class="status ' + (book.available ? "available" : "checked-out") + '">' +
-        (book.available ? "Available" : "Checked out") + "</p>";
+
+    const cover = document.createElement("div");
+    cover.className = "cover";
+    cover.style.backgroundColor = getColor(book.genre);
+    addText(cover, "span", "cover-title", book.title);
+    addText(cover, "span", "cover-author", book.author);
+
+    if (isbns[book.id]) {
+      const img = document.createElement("img");
+      img.className = "cover-img";
+      img.alt = "Cover of " + book.title;
+      img.loading = "lazy";
+      img.src = "https://covers.openlibrary.org/b/isbn/" + isbns[book.id] + "-L.jpg?default=false";
+      img.addEventListener("error", function () { img.remove(); });
+      cover.appendChild(img);
+    }
+    card.appendChild(cover);
+
+    addText(card, "h3", "", book.title);
+    addText(card, "p", "", book.author + " (" + book.year + ")");
+    addText(card, "p", "", "Genre: " + book.genre);
+    addText(
+      card,
+      "p",
+      "status " + (book.available ? "available" : "checked-out"),
+      book.available ? "Available" : "Checked out"
+    );
+
     bookList.appendChild(card);
   });
 }
 
-/* ---------- Genre buttons ---------- */
+/* ---------- Search + genre filters ---------- */
+let currentGenre = "All";
+let currentQuery = "";
+
+const controls = document.createElement("div");
+controls.className = "controls";
+
+const search = document.createElement("input");
+search.type = "search";
+search.className = "search";
+search.placeholder = "Search by title or author...";
+
 const filters = document.createElement("div");
 filters.className = "filters";
-bookList.parentNode.insertBefore(filters, bookList);
 
-function showGenre(genre) {
-  if (genre === "All") {
-    renderBooks(books);
-  } else {
-    renderBooks(books.filter(function (b) { return b.genre === genre; }));
-  }
-  document.querySelectorAll(".filters button").forEach(function (btn) {
-    btn.classList.toggle("active", btn.textContent === genre);
+controls.append(search, filters);
+bookList.parentNode.insertBefore(controls, bookList);
+
+function applyFilters() {
+  const filtered = books.filter(function (b) {
+    const okGenre = currentGenre === "All" || b.genre === currentGenre;
+    const okQuery =
+      currentQuery === "" ||
+      b.title.toLowerCase().includes(currentQuery) ||
+      b.author.toLowerCase().includes(currentQuery);
+    return okGenre && okQuery;
+  });
+
+  renderBooks(filtered);
+
+  filters.querySelectorAll("button").forEach(function (btn) {
+    btn.classList.toggle("active", btn.dataset.genre === currentGenre);
   });
 }
+
+search.addEventListener("input", function () {
+  currentQuery = search.value.trim().toLowerCase();
+  applyFilters();
+});
 
 const genres = ["All"];
 books.forEach(function (b) {
@@ -64,8 +125,12 @@ books.forEach(function (b) {
 genres.forEach(function (genre) {
   const btn = document.createElement("button");
   btn.textContent = genre;
-  btn.onclick = function () { showGenre(genre); };
+  btn.dataset.genre = genre;
+  btn.addEventListener("click", function () {
+    currentGenre = genre;
+    applyFilters();
+  });
   filters.appendChild(btn);
 });
 
-showGenre("All");
+applyFilters();
