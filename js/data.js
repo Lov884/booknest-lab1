@@ -20,3 +20,8 @@ const books = [
   { id: 19, title: "Fahrenheit 451", author: "Ray Bradbury", year: 1953, genre: "Dystopia", pages: 249, description: "A fireman burns books in a future society.", available: true },
   { id: 20, title: "Cosmos", author: "Carl Sagan", year: 1980, genre: "Science", pages: 365, description: "A journey through the universe and the history of science.", available: true }
 ];
+/* books added through the form are stored in the browser */
+try {
+  const saved = JSON.parse(localStorage.getItem("booknest-extra") || "[]");
+  saved.forEach(function (b) { books.push(b); });
+} catch (e) {}
