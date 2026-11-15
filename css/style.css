@@ -252,5 +252,4 @@ footer { text-align: center; padding: 24px; color: var(--muted); }
 .form-message { grid-column: 1 / -1; font-weight: 600; }
 .form-message.error { color: #d6336c; }
 .form-message.ok { color: #2f9e44; }
-
-.add-form input:invalid:not(:placeholder-shown) { border-color: #d6336c; }
+.add-form input:user-invalid { border-color: #d6336c; }
