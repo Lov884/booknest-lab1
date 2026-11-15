@@ -63,7 +63,12 @@ function renderBooks(list) {
     }
     card.appendChild(cover);
 
-    addText(card, "h3", "", book.title);
+    const h3 = document.createElement("h3");
+    const link = document.createElement("a");
+    link.href = "book.html?id=" + book.id;
+    link.textContent = book.title;
+    h3.appendChild(link);
+    card.appendChild(h3);
     addText(card, "p", "", book.author + " (" + book.year + ")");
     addText(card, "p", "", "Genre: " + book.genre);
     addText(
